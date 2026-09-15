@@ -168,14 +168,17 @@
     <input type="hidden" name="record_id">
     <div class="riga-campi">
       <label>Tipo
-        <select name="tipo" required>
-          <option value="auto">Auto</option>
-          <option value="moto">Moto</option>
-          <option value="camper">Camper</option>
-          <option value="furgone">Furgone</option>
-          <option value="rimorchio">Rimorchio</option>
-          <option value="altro">Altro</option>
-        </select>
+        <div class="tipo-scelta">
+          <span class="tipo-icona" id="veicolo-tipo-icona" aria-hidden="true"></span>
+          <select name="tipo" id="veicolo-tipo" required>
+            <option value="auto">Auto</option>
+            <option value="moto">Moto</option>
+            <option value="camper">Camper</option>
+            <option value="furgone">Furgone</option>
+            <option value="rimorchio">Rimorchio</option>
+            <option value="altro">Altro</option>
+          </select>
+        </div>
       </label>
       <label>Targa
         <input name="targa" required maxlength="12" placeholder="GR716KL" style="text-transform:uppercase">
