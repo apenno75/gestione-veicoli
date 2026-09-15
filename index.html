@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Garage — scadenze e pagamenti dei veicoli</title>
+<meta name="description" content="Bollo, revisione e assicurazione di tutti i tuoi veicoli, con promemoria prima della scadenza.">
+<meta name="theme-color" content="#0A3D91">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<!-- ============================ ACCESSO ============================ -->
+<div id="vista-accesso" class="accesso" hidden>
+  <div class="accesso-riquadro">
+    <p class="accesso-occhiello">Garage</p>
+    <h1>Le scadenze dei tuoi veicoli, in un posto solo</h1>
+    <p class="accesso-testo">
+      Bollo, revisione e assicurazione di ogni mezzo, con un promemoria che arriva
+      prima della scadenza. Inserisci la tua email: ricevi un link e accedi, senza password.
+    </p>
+    <form id="form-accesso">
+      <label for="accesso-email">Email</label>
+      <input type="email" id="accesso-email" required autocomplete="email" placeholder="nome@esempio.it">
+      <button type="submit" class="btn btn-primario">Ricevi il link di accesso</button>
+    </form>
+    <p id="accesso-esito" class="accesso-esito" role="status"></p>
+  </div>
+</div>
+
+<!-- ======================= CONFIGURAZIONE MANCANTE ================== -->
+<div id="vista-config" class="accesso" hidden>
+  <div class="accesso-riquadro">
+    <h1>Manca il collegamento a Supabase</h1>
+    <p class="accesso-testo">
+      Apri <code>config.js</code> e inserisci l'URL del progetto e la chiave <code>anon</code>,
+      che trovi in Supabase sotto <em>Project Settings → API</em>. Poi ricarica la pagina.
+    </p>
+  </div>
+</div>
+
+<!-- =========================== APPLICAZIONE ======================== -->
+<div id="vista-app" hidden>
+
+  <header class="barra">
+    <div class="barra-interno">
+      <a class="marchio" href="#agenda">
+        <span class="marchio-banda">I</span>
+        <span class="marchio-nome">Garage</span>
+      </a>
+      <nav class="barra-nav">
+        <button class="btn btn-fantasma" data-azione="nuovo-veicolo">Aggiungi veicolo</button>
+        <button class="btn btn-fantasma" data-azione="impostazioni">Promemoria</button>
+        <button class="btn btn-fantasma" data-azione="esci">Esci</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="contenuto">
+
+    <!-- ----------------------- SINTESI ------------------------- -->
+    <section class="sintesi" id="sintesi" aria-label="Situazione attuale">
+      <div class="sintesi-blocco sintesi-principale">
+        <p class="sintesi-etichetta">Prossima scadenza</p>
+        <p class="sintesi-valore" id="sintesi-giorni">—</p>
+        <p class="sintesi-dettaglio" id="sintesi-cosa">Nessuna scadenza aperta</p>
+      </div>
+      <div class="sintesi-blocco">
+        <p class="sintesi-etichetta">Scadute o entro 7 giorni</p>
+        <p class="sintesi-valore sintesi-valore-piccolo" id="sintesi-urgenti">0</p>
+      </div>
+      <div class="sintesi-blocco">
+        <p class="sintesi-etichetta">Da pagare nei prossimi 12 mesi</p>
+        <p class="sintesi-valore sintesi-valore-piccolo" id="sintesi-previsto">€ 0</p>
+      </div>
+      <div class="sintesi-blocco">
+        <p class="sintesi-etichetta">Speso nel <span id="sintesi-anno"></span></p>
+        <p class="sintesi-valore sintesi-valore-piccolo" id="sintesi-speso">€ 0</p>
+      </div>
+    </section>
+
+    <!-- ----------------------- AGENDA -------------------------- -->
+    <section class="sezione" id="agenda">
+      <div class="sezione-testa">
+        <h2>Agenda</h2>
+        <div class="filtri" role="group" aria-label="Filtra l'agenda">
+          <button class="chip chip-attivo" data-filtro="tutte">Tutte</button>
+          <button class="chip" data-filtro="assicurazione">Assicurazione</button>
+          <button class="chip" data-filtro="bollo">Bollo</button>
+          <button class="chip" data-filtro="revisione">Revisione</button>
+          <button class="chip" data-filtro="altro">Altro</button>
+        </div>
+      </div>
+      <ul class="agenda-lista" id="agenda-lista"></ul>
+    </section>
+
+    <!-- ----------------------- VEICOLI ------------------------- -->
+    <section class="sezione" id="veicoli">
+      <div class="sezione-testa">
+        <h2>Veicoli</h2>
+        <button class="btn btn-secondario" data-azione="nuovo-veicolo">Aggiungi veicolo</button>
+      </div>
+      <div class="griglia-veicoli" id="griglia-veicoli"></div>
+    </section>
+
+    <!-- ---------------------- PAGAMENTI ------------------------ -->
+    <section class="sezione" id="pagamenti">
+      <div class="sezione-testa">
+        <h2>Spese registrate</h2>
+        <div class="sezione-comandi">
+          <label class="campo-inline">
+            <span>Anno</span>
+            <select id="filtro-anno"></select>
+          </label>
+          <label class="campo-inline">
+            <span>Veicolo</span>
+            <select id="filtro-veicolo"><option value="tutti">Tutti</option></select>
+          </label>
+        </div>
+      </div>
+      <div class="tabella-guscio">
+        <table class="tabella">
+          <thead>
+            <tr>
+              <th scope="col">Data</th>
+              <th scope="col">Veicolo</th>
+              <th scope="col">Voce</th>
+              <th scope="col">Note</th>
+              <th scope="col" class="num">Importo</th>
+              <th scope="col"><span class="solo-lettori">Azioni</span></th>
+            </tr>
+          </thead>
+          <tbody id="corpo-pagamenti"></tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4">Totale</td>
+              <td class="num" id="totale-pagamenti">€ 0</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="pie">
+    <p>I dati restano nel tuo progetto Supabase. <button class="link" data-azione="esporta">Scarica tutto in CSV</button></p>
+  </footer>
+</div>
+
+<!-- ============================ FINESTRE =========================== -->
+
+<dialog id="dlg-veicolo" class="dlg">
+  <form method="dialog" id="form-veicolo" class="dlg-form">
+    <h2 id="titolo-veicolo">Nuovo veicolo</h2>
+    <input type="hidden" name="record_id">
+    <div class="riga-campi">
+      <label>Tipo
+        <select name="tipo" required>
+          <option value="auto">Auto</option>
+          <option value="moto">Moto</option>
+          <option value="camper">Camper</option>
+          <option value="furgone">Furgone</option>
+          <option value="rimorchio">Rimorchio</option>
+          <option value="altro">Altro</option>
+        </select>
+      </label>
+      <label>Targa
+        <input name="targa" required maxlength="12" placeholder="GR716KL" style="text-transform:uppercase">
+      </label>
+    </div>
+    <div class="riga-campi">
+      <label>Marca <input name="marca" placeholder="Fiat"></label>
+      <label>Modello <input name="modello" required placeholder="500L"></label>
+    </div>
+    <div class="riga-campi">
+      <label>Immatricolazione <input type="date" name="data_immatricolazione"></label>
+      <label>CV <input type="number" name="cv" min="0" step="1"></label>
+      <label>kW <input type="number" name="kw" min="0" step="0.1"></label>
+    </div>
+    <label>Pressione gomme <input name="pressione_gomme" placeholder="3,8 / 4,4 bar"></label>
+    <label>Note <textarea name="note" rows="2"></textarea></label>
+    <div class="dlg-azioni">
+      <button type="button" class="btn btn-pericolo" data-azione="elimina-veicolo" hidden>Elimina</button>
+      <span class="spazio"></span>
+      <button type="button" class="btn btn-fantasma" data-chiudi>Annulla</button>
+      <button type="submit" class="btn btn-primario">Salva veicolo</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-scadenza" class="dlg">
+  <form method="dialog" id="form-scadenza" class="dlg-form">
+    <h2 id="titolo-scadenza">Nuova scadenza</h2>
+    <input type="hidden" name="record_id">
+    <input type="hidden" name="veicolo_id">
+    <div class="riga-campi">
+      <label>Voce
+        <select name="tipo" required>
+          <option value="assicurazione">Assicurazione</option>
+          <option value="bollo">Bollo</option>
+          <option value="revisione">Revisione</option>
+          <option value="tagliando">Tagliando</option>
+          <option value="gomme">Gomme</option>
+          <option value="batteria">Batteria</option>
+          <option value="cinghia">Cinghia di distribuzione</option>
+          <option value="bombole">Bombole gas</option>
+          <option value="altro">Altro</option>
+        </select>
+      </label>
+      <label>Ogni quanto si ripete
+        <select name="periodicita" required>
+          <option value="semestrale">Sei mesi</option>
+          <option value="annuale" selected>Un anno</option>
+          <option value="biennale">Due anni</option>
+          <option value="triennale">Tre anni</option>
+          <option value="quadriennale">Quattro anni</option>
+          <option value="mensile">Un mese</option>
+          <option value="trimestrale">Tre mesi</option>
+          <option value="nessuna">Una volta sola</option>
+        </select>
+      </label>
+    </div>
+    <div class="riga-campi">
+      <label>Scade il <input type="date" name="data_scadenza" required></label>
+      <label>Importo previsto <input type="number" name="importo_previsto" step="0.01" min="0" placeholder="240,81"></label>
+      <label>Avvisami (giorni prima) <input type="number" name="giorni_preavviso" min="0" max="365" value="7"></label>
+    </div>
+    <div class="riga-campi">
+      <label>Compagnia o ente <input name="fornitore" placeholder="Genertel"></label>
+      <label>Descrizione <input name="descrizione" placeholder="Polizza RCA"></label>
+    </div>
+    <label>Note <textarea name="note" rows="2"></textarea></label>
+    <div class="dlg-azioni">
+      <button type="button" class="btn btn-pericolo" data-azione="elimina-scadenza" hidden>Elimina</button>
+      <span class="spazio"></span>
+      <button type="button" class="btn btn-fantasma" data-chiudi>Annulla</button>
+      <button type="submit" class="btn btn-primario">Salva scadenza</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-pagamento" class="dlg">
+  <form method="dialog" id="form-pagamento" class="dlg-form">
+    <h2>Registra il pagamento</h2>
+    <p class="dlg-nota" id="pagamento-contesto"></p>
+    <input type="hidden" name="scadenza_id">
+    <div class="riga-campi">
+      <label>Pagato il <input type="date" name="data_pagamento" required></label>
+      <label>Importo <input type="number" name="importo" step="0.01" min="0" required></label>
+    </div>
+    <div class="riga-campi">
+      <label>Come <input name="metodo" placeholder="Bonifico, carta, tabaccheria…"></label>
+      <label>Riferimento <input name="riferimento" placeholder="N. polizza o quietanza"></label>
+    </div>
+    <label>Note <textarea name="note" rows="2"></textarea></label>
+    <p class="dlg-nota" id="pagamento-rinnovo"></p>
+    <div class="dlg-azioni">
+      <span class="spazio"></span>
+      <button type="button" class="btn btn-fantasma" data-chiudi>Annulla</button>
+      <button type="submit" class="btn btn-primario">Registra pagamento</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-impostazioni" class="dlg">
+  <form method="dialog" id="form-impostazioni" class="dlg-form">
+    <h2>Promemoria</h2>
+    <p class="dlg-nota">
+      L'email parte automaticamente ogni mattina per le scadenze che rientrano nel preavviso.
+      Il browser ti avvisa quando apri l'app.
+    </p>
+    <label>Manda l'email a <input type="email" name="email_promemoria" required></label>
+    <label>Quanti giorni prima <input type="number" name="giorni_preavviso" min="0" max="365" required></label>
+    <label class="campo-check">
+      <input type="checkbox" name="invia_email"> Voglio ricevere l'email
+    </label>
+    <div class="dlg-azioni">
+      <button type="button" class="btn btn-fantasma" data-azione="chiedi-notifiche">Attiva avvisi del browser</button>
+      <span class="spazio"></span>
+      <button type="button" class="btn btn-fantasma" data-chiudi>Annulla</button>
+      <button type="submit" class="btn btn-primario">Salva impostazioni</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="avviso" class="avviso" role="status" aria-live="polite" hidden></div>
+
+<script type="module" src="assets/app.js"></script>
+</body>
+</html>
