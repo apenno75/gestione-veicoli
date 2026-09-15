@@ -30,7 +30,7 @@
     <form id="form-codice" hidden>
       <label for="accesso-codice">Codice ricevuto via email</label>
       <input type="text" id="accesso-codice" inputmode="numeric" autocomplete="one-time-code"
-             pattern="[0-9]{6}" maxlength="6" required placeholder="123456">
+             pattern="[0-9]{6,10}" maxlength="10" required placeholder="Il codice ricevuto via email">
       <button type="submit" class="btn btn-primario">Entra</button>
       <button type="button" class="btn btn-fantasma" id="accesso-annulla">Usa un'altra email</button>
     </form>
