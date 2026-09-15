@@ -344,6 +344,21 @@ button{font:inherit;}
 }
 .dlg-form textarea{resize:vertical;}
 .riga-campi{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:.85rem;}
+
+/* ------------------------- icona tipo veicolo ------------------------ */
+
+.tipo-scelta{display:flex;align-items:center;gap:.6rem;}
+.tipo-icona{
+  flex:0 0 auto;
+  width:2.4rem;height:2.4rem;
+  display:grid;place-items:center;
+  border-radius:50%;
+  background:var(--nebbia);
+  color:var(--grafite);
+  transition:background-color .15s ease,color .15s ease;
+}
+.tipo-icona svg{width:1.45rem;height:1.45rem;display:block;}
+.tipo-scelta select{flex:1;}
 .campo-check{display:flex!important;flex-direction:row;align-items:center;gap:.5rem;}
 .campo-check input{width:auto;}
 .dlg-nota{margin:0;font-size:.88rem;color:var(--grafite);}

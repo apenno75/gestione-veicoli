@@ -113,6 +113,77 @@ function targaHTML(targa) {
   return `<span class="targa"><span class="targa-banda"><span class="targa-stelle">★★★</span>I</span><span class="targa-codice">${esc(targa || '—')}</span></span>`;
 }
 
+/* ------------------------- icone tipo veicolo ------------------------ */
+
+const ICONE_VEICOLI = {
+  auto: {
+    colore: '#0A3D91',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 16v-3.3a1 1 0 0 1 .4-.8l1.1-.8 1.2-3a1 1 0 0 1 .9-.6h10.8a1 1 0 0 1 .9.6l1.2 3 1.1.8a1 1 0 0 1 .4.8V16"/>
+      <path d="M3 16h1.8M8.6 16h6.8M18.2 16H21"/>
+      <circle cx="7" cy="16.3" r="1.6"/>
+      <circle cx="17" cy="16.3" r="1.6"/>
+    </svg>`,
+  },
+  moto: {
+    colore: '#B87503',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="5.6" cy="17" r="2.3"/>
+      <circle cx="18.4" cy="17" r="2.3"/>
+      <path d="M7.7 17h5.8l2-5H19"/>
+      <path d="M13.5 12 11 8.5H8"/>
+      <path d="M4 13.5 7 9h3"/>
+    </svg>`,
+  },
+  camper: {
+    colore: '#0F7A46',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 16V9a1 1 0 0 1 1-1h9l5 3.2a1 1 0 0 1 .5.9V16"/>
+      <rect x="3.5" y="9.3" width="6.3" height="3.6" rx=".4"/>
+      <path d="M3 16h1.8M9.6 16h5.8M19 16H21"/>
+      <circle cx="7" cy="17.5" r="1.6"/>
+      <circle cx="16.5" cy="17.5" r="1.6"/>
+    </svg>`,
+  },
+  furgone: {
+    colore: '#4A5158',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 16V8a1 1 0 0 1 1-1h9v9"/>
+      <path d="M13 11h4.6l3 3.1V16"/>
+      <path d="M3 16h2.4M8.6 16h6.8M18.6 16H21"/>
+      <circle cx="7" cy="17.5" r="1.6"/>
+      <circle cx="17" cy="17.5" r="1.6"/>
+    </svg>`,
+  },
+  rimorchio: {
+    colore: '#7C858D',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 12h3.2"/>
+      <rect x="5.2" y="9" width="13.8" height="7" rx="1"/>
+      <path d="M9 16v-2.2M15 16v-2.2"/>
+      <circle cx="9" cy="18" r="1.5"/>
+      <circle cx="15" cy="18" r="1.5"/>
+    </svg>`,
+  },
+  altro: {
+    colore: '#6B3FA0',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="5" width="18" height="14" rx="2"/>
+      <path d="M9.6 9.6a2.4 2.4 0 1 1 3.4 2.2c-.8.4-1 .9-1 1.7"/>
+      <circle cx="12" cy="16.4" r=".9" fill="currentColor" stroke="none"/>
+    </svg>`,
+  },
+};
+
+function aggiornaIconaVeicolo(tipo) {
+  const el = $('#veicolo-tipo-icona');
+  if (!el) return;
+  const info = ICONE_VEICOLI[tipo] ?? ICONE_VEICOLI.altro;
+  el.innerHTML = info.svg;
+  el.style.color = info.colore;
+  el.style.background = `${info.colore}22`;
+}
+
 /* ------------------------------ avvio ------------------------------- */
 
 function configurato() {
@@ -456,6 +527,7 @@ function apriVeicolo(id = null) {
       form[campo].value = v[campo] ?? '';
     }
   }
+  aggiornaIconaVeicolo(form.tipo.value);
   $('#dlg-veicolo').showModal();
 }
 
@@ -694,6 +766,7 @@ function collegaEventi() {
   $('#form-codice').addEventListener('submit', verificaCodice);
   $('#accesso-annulla').addEventListener('click', annullaCodice);
   $('#form-veicolo').addEventListener('submit', salvaVeicolo);
+  $('#veicolo-tipo').addEventListener('change', (e) => aggiornaIconaVeicolo(e.target.value));
   $('#form-scadenza').addEventListener('submit', salvaScadenza);
   $('#form-pagamento').addEventListener('submit', salvaPagamento);
   $('#form-impostazioni').addEventListener('submit', salvaImpostazioni);
