@@ -184,6 +184,11 @@ function aggiornaIconaVeicolo(tipo) {
   el.style.background = `${info.colore}22`;
 }
 
+function iconaVeicoloHTML(tipo, classe = 'veicolo-icona') {
+  const info = ICONE_VEICOLI[tipo] ?? ICONE_VEICOLI.altro;
+  return `<span class="${classe}" style="color:${info.colore};background:${info.colore}22">${info.svg}</span>`;
+}
+
 /* ------------------------------ avvio ------------------------------- */
 
 function configurato() {
@@ -450,9 +455,12 @@ function disegnaVeicoli() {
 
     return `<article class="veicolo">
       <div class="veicolo-testa">
-        <div>
-          <h3 class="veicolo-nome">${esc(nomeVeicolo(v))}</h3>
-          <span class="veicolo-tipo">${esc(v.tipo)}</span>
+        <div class="veicolo-testa-info">
+          ${iconaVeicoloHTML(v.tipo)}
+          <div>
+            <h3 class="veicolo-nome">${esc(nomeVeicolo(v))}</h3>
+            <span class="veicolo-tipo">${esc(v.tipo)}</span>
+          </div>
         </div>
         ${targaHTML(v.targa)}
       </div>

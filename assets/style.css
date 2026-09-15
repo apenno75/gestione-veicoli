@@ -261,6 +261,7 @@ button{font:inherit;}
   display:flex;flex-direction:column;gap:.75rem;
 }
 .veicolo-testa{display:flex;justify-content:space-between;align-items:flex-start;gap:.75rem;}
+.veicolo-testa-info{display:flex;align-items:center;gap:.65rem;min-width:0;}
 .veicolo-nome{margin:0;font-size:1.3rem;}
 .veicolo-tipo{font-size:.8rem;color:var(--fumo);text-transform:capitalize;}
 .veicolo-dati{margin:0;font-size:.88rem;color:var(--grafite);}
@@ -348,7 +349,7 @@ button{font:inherit;}
 /* ------------------------- icona tipo veicolo ------------------------ */
 
 .tipo-scelta{display:flex;align-items:center;gap:.6rem;}
-.tipo-icona{
+.tipo-icona,.veicolo-icona{
   flex:0 0 auto;
   width:2.4rem;height:2.4rem;
   display:grid;place-items:center;
@@ -357,7 +358,7 @@ button{font:inherit;}
   color:var(--grafite);
   transition:background-color .15s ease,color .15s ease;
 }
-.tipo-icona svg{width:1.45rem;height:1.45rem;display:block;}
+.tipo-icona svg,.veicolo-icona svg{width:1.45rem;height:1.45rem;display:block;}
 .tipo-scelta select{flex:1;}
 .campo-check{display:flex!important;flex-direction:row;align-items:center;gap:.5rem;}
 .campo-check input{width:auto;}
