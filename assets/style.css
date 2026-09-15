@@ -26,6 +26,9 @@
 
 *{box-sizing:border-box;}
 
+/* L'attributo hidden deve sempre vincere, anche su classi con display:grid/flex ecc. */
+[hidden]{display:none !important;}
+
 html{-webkit-text-size-adjust:100%;}
 
 body{
