@@ -127,7 +127,14 @@ async function avvia() {
     return;
   }
 
-  db = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+  db = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
+    auth: {
+      // Evita il lock basato su navigator.locks: in certi browser può restare
+      // "orfano" dopo una ricarica a metà operazione e bloccare per sempre
+      // ogni chiamata successiva. Per un'app a singolo utente non serve.
+      lock: async (_nome, _timeoutAcquisizione, fn) => fn(),
+    },
+  });
 
   const { data: { session } } = await db.auth.getSession();
   stato.sessione = session;
