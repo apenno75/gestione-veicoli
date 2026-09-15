@@ -44,6 +44,7 @@ const RIPETIZIONI = {
 };
 
 let db = null;
+let emailInAttesa = null;
 
 /* ------------------------------ utilità ----------------------------- */
 
@@ -145,6 +146,7 @@ async function mostraVista() {
   const dentro = Boolean(stato.sessione);
   $('#vista-accesso').hidden = dentro;
   $('#vista-app').hidden = !dentro;
+  if (!dentro) annullaCodice();
   if (dentro) await caricaDati();
 }
 
@@ -157,17 +159,49 @@ async function inviaLink(evento) {
   esito.dataset.tipo = '';
   esito.textContent = 'Invio in corso…';
 
-  const { error } = await db.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: window.location.href.split('#')[0] },
-  });
+  const { error } = await db.auth.signInWithOtp({ email });
 
   if (error) {
     esito.dataset.tipo = 'errore';
     esito.textContent = `Non è partito niente: ${error.message}`;
     return;
   }
-  esito.textContent = `Link inviato a ${email}. Aprilo da questo dispositivo per entrare.`;
+
+  emailInAttesa = email;
+  $('#form-accesso').hidden = true;
+  $('#form-codice').hidden = false;
+  $('#accesso-codice').value = '';
+  $('#accesso-codice').focus();
+  esito.dataset.tipo = '';
+  esito.textContent = `Codice inviato a ${email}. Controlla la posta e scrivilo qui sotto.`;
+}
+
+async function verificaCodice(evento) {
+  evento.preventDefault();
+  const codice = $('#accesso-codice').value.trim();
+  const esito = $('#accesso-esito');
+  esito.dataset.tipo = '';
+  esito.textContent = 'Verifica in corso…';
+
+  const { error } = await db.auth.verifyOtp({
+    email: emailInAttesa,
+    token: codice,
+    type: 'email',
+  });
+
+  if (error) {
+    esito.dataset.tipo = 'errore';
+    esito.textContent = `Codice non valido o scaduto: ${error.message}`;
+    return;
+  }
+  // onAuthStateChange si occupa di mostrare l'app: nessun'altra azione necessaria qui.
+}
+
+function annullaCodice() {
+  emailInAttesa = null;
+  $('#form-codice').hidden = true;
+  $('#form-accesso').hidden = false;
+  $('#accesso-esito').textContent = '';
 }
 
 /* ------------------------------ dati -------------------------------- */
@@ -646,6 +680,8 @@ function esportaCSV() {
 
 function collegaEventi() {
   $('#form-accesso').addEventListener('submit', inviaLink);
+  $('#form-codice').addEventListener('submit', verificaCodice);
+  $('#accesso-annulla').addEventListener('click', annullaCodice);
   $('#form-veicolo').addEventListener('submit', salvaVeicolo);
   $('#form-scadenza').addEventListener('submit', salvaScadenza);
   $('#form-pagamento').addEventListener('submit', salvaPagamento);
