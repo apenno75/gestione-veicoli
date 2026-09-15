@@ -183,18 +183,22 @@ async function verificaCodice(evento) {
   esito.dataset.tipo = '';
   esito.textContent = 'Verifica in corso…';
 
-  const { error } = await db.auth.verifyOtp({
-    email: emailInAttesa,
-    token: codice,
-    type: 'email',
-  });
+  try {
+    const { error } = await db.auth.verifyOtp({
+      email: emailInAttesa,
+      token: codice,
+      type: 'email',
+    });
 
-  if (error) {
+    if (error) {
+      esito.dataset.tipo = 'errore';
+      esito.textContent = `Codice non valido o scaduto: ${error.message}`;
+    }
+    // Se non c'è errore, onAuthStateChange mostra l'app da solo: nessun'altra azione qui.
+  } catch (e) {
     esito.dataset.tipo = 'errore';
-    esito.textContent = `Codice non valido o scaduto: ${error.message}`;
-    return;
+    esito.textContent = `Qualcosa è andato storto: ${e?.message ?? e}`;
   }
-  // onAuthStateChange si occupa di mostrare l'app: nessun'altra azione necessaria qui.
 }
 
 function annullaCodice() {
