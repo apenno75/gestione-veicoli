@@ -20,12 +20,19 @@
     <h1>Le scadenze dei tuoi veicoli, in un posto solo</h1>
     <p class="accesso-testo">
       Bollo, revisione e assicurazione di ogni mezzo, con un promemoria che arriva
-      prima della scadenza. Inserisci la tua email: ricevi un link e accedi, senza password.
+      prima della scadenza. Inserisci la tua email: ricevi un codice via email e accedi, senza password.
     </p>
     <form id="form-accesso">
       <label for="accesso-email">Email</label>
       <input type="email" id="accesso-email" required autocomplete="email" placeholder="nome@esempio.it">
-      <button type="submit" class="btn btn-primario">Ricevi il link di accesso</button>
+      <button type="submit" class="btn btn-primario">Ricevi il codice di accesso</button>
+    </form>
+    <form id="form-codice" hidden>
+      <label for="accesso-codice">Codice ricevuto via email</label>
+      <input type="text" id="accesso-codice" inputmode="numeric" autocomplete="one-time-code"
+             pattern="[0-9]{6}" maxlength="6" required placeholder="123456">
+      <button type="submit" class="btn btn-primario">Entra</button>
+      <button type="button" class="btn btn-fantasma" id="accesso-annulla">Usa un'altra email</button>
     </form>
     <p id="accesso-esito" class="accesso-esito" role="status"></p>
   </div>
