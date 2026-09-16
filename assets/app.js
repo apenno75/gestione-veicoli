@@ -768,6 +768,41 @@ async function testaPromemoria() {
   }
 }
 
+async function testaPromemoriaReale() {
+  const conferma = confirm(
+    'Verranno controllate le scadenze reali e inviate email vere a chi ha il promemoria attivo. ' +
+    'Le scadenze notificate saranno segnate come "già avvisate" e non verranno rimandate. Continuare?'
+  );
+  if (!conferma) return;
+
+  console.log('[garage] pulsante test-promemoria-reale: clic ricevuto, chiamo la funzione…');
+  avvisa('Controllo le scadenze reali…');
+
+  const { data, error } = await db.functions.invoke('invia-promemoria', {
+    method: 'POST',
+    body: {},
+  });
+
+  if (error) {
+    avvisa(`Test fallito: ${error.message}`, 'errore');
+    return;
+  }
+
+  const { errore: erroreFunzione, inviate, scadenze_segnalate, motivo } = data ?? {};
+
+  if (erroreFunzione) {
+    avvisa(`La funzione ha risposto con un errore: ${erroreFunzione}`, 'errore');
+  } else if (motivo) {
+    avvisa('Nessuna scadenza aperta al momento.');
+  } else if (typeof inviate === 'number') {
+    avvisa(inviate > 0
+      ? `Inviate ${inviate} email per ${scadenze_segnalate} scadenza/e.`
+      : 'Nessuna email inviata: nessuna scadenza rientra nel preavviso, oppure il promemoria non è attivo.');
+  } else {
+    avvisa('Test completato, ma la risposta non era quella attesa.', 'errore');
+  }
+}
+
 /* ------------------------------ esporta ----------------------------- */
 
 function esportaCSV() {
@@ -837,6 +872,7 @@ function collegaEventi() {
       case 'impostazioni': apriImpostazioni(); break;
       case 'chiedi-notifiche': await chiediNotifiche(); break;
       case 'test-promemoria': await testaPromemoria(); break;
+      case 'test-promemoria-reale': await testaPromemoriaReale(); break;
       case 'esporta': esportaCSV(); break;
       case 'esci': await db.auth.signOut(); break;
       default: console.warn('[garage] azione non riconosciuta:', azione);
