@@ -32,6 +32,12 @@ const ETICHETTE = {
   altro: 'Altro',
 };
 
+const ETICHETTE_ALIMENTAZIONE = {
+  benzina: 'Benzina',
+  diesel: 'Diesel',
+  gpl_metano: 'GPL/Metano',
+};
+
 const RIPETIZIONI = {
   mensile: 'ogni mese',
   trimestrale: 'ogni tre mesi',
@@ -439,6 +445,8 @@ function disegnaVeicoli() {
       v.data_immatricolazione ? `Immatricolata il ${dataIT(v.data_immatricolazione)}` : null,
       v.cv ? `${v.cv} CV` : null,
       v.kw ? `${String(v.kw).replace('.', ',')} kW` : null,
+      v.alimentazione ? ETICHETTE_ALIMENTAZIONE[v.alimentazione] ?? v.alimentazione : null,
+      v.classe_euro ? `Euro ${v.classe_euro}` : null,
       v.pressione_gomme ? `gomme ${v.pressione_gomme}` : null,
     ].filter(Boolean).join(' · ');
 
@@ -531,7 +539,7 @@ function apriVeicolo(id = null) {
   $('[data-azione="elimina-veicolo"]').hidden = !v;
   form.record_id.value = v?.id ?? '';
   if (v) {
-    for (const campo of ['tipo', 'marca', 'modello', 'targa', 'data_immatricolazione', 'cv', 'kw', 'pressione_gomme', 'note']) {
+    for (const campo of ['tipo', 'marca', 'modello', 'targa', 'data_immatricolazione', 'cv', 'kw', 'alimentazione', 'classe_euro', 'pressione_gomme', 'note']) {
       form[campo].value = v[campo] ?? '';
     }
   }
@@ -595,7 +603,7 @@ function valoriForm(form, numerici = []) {
 async function salvaVeicolo(evento) {
   evento.preventDefault();
   const form = evento.target;
-  const dati = valoriForm(form, ['cv', 'kw']);
+  const dati = valoriForm(form, ['cv', 'kw', 'classe_euro']);
   const id = dati.record_id;
   delete dati.record_id;
   dati.targa = dati.targa?.toUpperCase() ?? null;
