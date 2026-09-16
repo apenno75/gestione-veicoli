@@ -744,6 +744,7 @@ function controllaNotifiche() {
 /* ---------------------- test manuale del promemoria ------------------ */
 
 async function testaPromemoria() {
+  console.log('[garage] pulsante test-promemoria: clic ricevuto, chiamo la funzione…');
   avvisa('Test in corso: chiamo la funzione dei promemoria…');
 
   const { data, error } = await db.functions.invoke('invia-promemoria', { method: 'POST' });
@@ -837,6 +838,7 @@ function collegaEventi() {
       case 'test-promemoria': await testaPromemoria(); break;
       case 'esporta': esportaCSV(); break;
       case 'esci': await db.auth.signOut(); break;
+      default: console.warn('[garage] azione non riconosciuta:', azione);
     }
   });
 }
