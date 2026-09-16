@@ -745,25 +745,26 @@ function controllaNotifiche() {
 
 async function testaPromemoria() {
   console.log('[garage] pulsante test-promemoria: clic ricevuto, chiamo la funzione…');
-  avvisa('Test in corso: chiamo la funzione dei promemoria…');
+  avvisa('Test in corso: invio un\'email di prova…');
 
-  const { data, error } = await db.functions.invoke('invia-promemoria', { method: 'POST' });
+  const { data, error } = await db.functions.invoke('invia-promemoria', {
+    method: 'POST',
+    body: { test: true },
+  });
 
   if (error) {
     avvisa(`Test fallito: ${error.message}`, 'errore');
     return;
   }
 
-  const { inviate = 0, scadenze_segnalate: segnalate = 0, motivo, errore: erroreFunzione } = data ?? {};
+  const { errore: erroreFunzione, prova, destinatario } = data ?? {};
 
   if (erroreFunzione) {
     avvisa(`La funzione ha risposto con un errore: ${erroreFunzione}`, 'errore');
-  } else if (inviate > 0) {
-    avvisa(`Fatto: ${inviate} email inviate, ${segnalate} scadenze segnalate.`);
+  } else if (prova) {
+    avvisa(`Email di prova inviata a ${destinatario}.`);
   } else {
-    avvisa(motivo
-      ? `Nessuna email inviata: ${motivo}.`
-      : 'Nessuna email da mandare ora: nessuna scadenza rientra nel preavviso.');
+    avvisa('Test completato, ma la risposta non era quella attesa.', 'errore');
   }
 }
 
