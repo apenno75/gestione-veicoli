@@ -741,6 +741,31 @@ function controllaNotifiche() {
   localStorage.setItem(chiave, '1');
 }
 
+/* ---------------------- test manuale del promemoria ------------------ */
+
+async function testaPromemoria() {
+  avvisa('Test in corso: chiamo la funzione dei promemoria…');
+
+  const { data, error } = await db.functions.invoke('invia-promemoria', { method: 'POST' });
+
+  if (error) {
+    avvisa(`Test fallito: ${error.message}`, 'errore');
+    return;
+  }
+
+  const { inviate = 0, scadenze_segnalate: segnalate = 0, motivo, errore: erroreFunzione } = data ?? {};
+
+  if (erroreFunzione) {
+    avvisa(`La funzione ha risposto con un errore: ${erroreFunzione}`, 'errore');
+  } else if (inviate > 0) {
+    avvisa(`Fatto: ${inviate} email inviate, ${segnalate} scadenze segnalate.`);
+  } else {
+    avvisa(motivo
+      ? `Nessuna email inviata: ${motivo}.`
+      : 'Nessuna email da mandare ora: nessuna scadenza rientra nel preavviso.');
+  }
+}
+
 /* ------------------------------ esporta ----------------------------- */
 
 function esportaCSV() {
@@ -809,6 +834,7 @@ function collegaEventi() {
       case 'elimina-pagamento': await eliminaPagamento(id); break;
       case 'impostazioni': apriImpostazioni(); break;
       case 'chiedi-notifiche': await chiediNotifiche(); break;
+      case 'test-promemoria': await testaPromemoria(); break;
       case 'esporta': esportaCSV(); break;
       case 'esci': await db.auth.signOut(); break;
     }
