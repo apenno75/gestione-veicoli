@@ -297,6 +297,21 @@ button{font:inherit;}
 .pallino[data-stato="ambra"]{background:var(--ambra);}
 .pallino[data-stato="verde"]{background:var(--verde);}
 .veicolo-scadenza-voce{font-weight:500;text-transform:capitalize;}
+
+.tag-annuale{
+  display:inline-block;
+  font-family:"Barlow",sans-serif;
+  font-size:.68rem;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  color:var(--blu);
+  background:rgba(10,61,145,.1);
+  border-radius:999px;
+  padding:.05rem .5rem;
+  margin-left:.3rem;
+  vertical-align:middle;
+}
 .veicolo-scadenza-data{margin-left:auto;color:var(--grafite);font-variant-numeric:tabular-nums;}
 .veicolo-azioni{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:auto;padding-top:.3rem;}
 

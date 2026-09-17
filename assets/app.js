@@ -331,6 +331,42 @@ async function caricaDati() {
 
 const preavvisoDi = (s) => s.giorni_preavviso ?? stato.impostazioni?.giorni_preavviso ?? 7;
 
+// Il rinnovo annuale della polizza vive sul veicolo, non tra le scadenze:
+// a differenza della rata (che si ricrea da sola ogni volta che paghi) resta
+// fermo finché non lo aggiorni tu, quindi non si "consuma" a ogni pagamento.
+// Qui lo trasformiamo in una voce "finta" così Agenda e Sintesi lo trattano
+// come le altre scadenze, ma resta sempre etichettato in modo distinto.
+function rinnoviPolizza() {
+  return stato.veicoli
+    .filter((v) => v.assicurazione_rinnovo)
+    .map((v) => ({
+      id: null,
+      veicolo_id: v.id,
+      tipo: 'assicurazione',
+      data_scadenza: v.assicurazione_rinnovo,
+      veicoli: v,
+      fornitore: null,
+      periodicita: 'annuale',
+      importo_previsto: null,
+      giorni_preavviso: 30,
+      _polizza: true,
+    }));
+}
+
+function scadenzeAgendaComplete() {
+  return [...stato.scadenze, ...rinnoviPolizza()];
+}
+
+// Etichetta di una scadenza in agenda/scheda veicolo: il rinnovo annuale si
+// chiama sempre "Rinnovo polizza"; una rata assicurativa più frequente
+// dell'anno si segnala come "(rata)" per non confonderla col rinnovo.
+function etichettaScadenza(s) {
+  if (s._polizza) return 'Rinnovo polizza';
+  const base = ETICHETTE[s.tipo] ?? s.tipo;
+  const eRata = s.tipo === 'assicurazione' && s.periodicita !== 'annuale' && s.periodicita !== 'nessuna';
+  return eRata ? `${base} (rata)` : base;
+}
+
 /* ------------------------------ disegno ----------------------------- */
 
 function disegna() {
@@ -342,7 +378,7 @@ function disegna() {
 }
 
 function disegnaSintesi() {
-  const aperte = [...stato.scadenze].sort((a, b) => a.data_scadenza.localeCompare(b.data_scadenza));
+  const aperte = [...scadenzeAgendaComplete()].sort((a, b) => a.data_scadenza.localeCompare(b.data_scadenza));
   const prossima = aperte[0];
 
   const elGiorni = $('#sintesi-giorni');
@@ -355,7 +391,7 @@ function disegnaSintesi() {
     elGiorni.textContent = g < 0 ? `${Math.abs(g)} gg fa` : `${g} gg`;
     elGiorni.dataset.stato = statoDi(g, preavvisoDi(prossima));
     $('#sintesi-cosa').textContent =
-      `${ETICHETTE[prossima.tipo] ?? prossima.tipo} · ${nomeVeicolo(prossima.veicoli)} · ${dataLunga(prossima.data_scadenza)}`;
+      `${etichettaScadenza(prossima)} · ${nomeVeicolo(prossima.veicoli)} · ${dataLunga(prossima.data_scadenza)}`;
   }
 
   const urgenti = aperte.filter((s) => giorniA(s.data_scadenza) <= preavvisoDi(s));
@@ -380,7 +416,7 @@ function disegnaSintesi() {
 
 function disegnaAgenda() {
   const lista = $('#agenda-lista');
-  let voci = [...stato.scadenze].sort((a, b) => a.data_scadenza.localeCompare(b.data_scadenza));
+  let voci = [...scadenzeAgendaComplete()].sort((a, b) => a.data_scadenza.localeCompare(b.data_scadenza));
 
   if (stato.filtro === 'altro') voci = voci.filter((s) => !TIPI_NOTI.includes(s.tipo));
   else if (stato.filtro !== 'tutte') voci = voci.filter((s) => s.tipo === stato.filtro);
@@ -400,22 +436,26 @@ function disegnaAgenda() {
     const st = statoDi(g, preavvisoDi(s));
     const testoGiorni = g < 0 ? Math.abs(g) : g;
     const unita = g < 0 ? 'giorni di ritardo' : (g === 1 ? 'giorno' : 'giorni');
+    const comandi = s._polizza
+      ? `<span class="agenda-importo">—</span>
+         <button class="btn btn-fantasma btn-minuto" data-azione="modifica-veicolo" data-id="${s.veicolo_id}">Aggiorna rinnovo</button>`
+      : `<span class="agenda-importo">${euro(s.importo_previsto)}</span>
+         <button class="btn btn-secondario btn-minuto" data-azione="paga" data-id="${s.id}">Segna pagata</button>
+         <button class="btn btn-fantasma btn-minuto" data-azione="modifica-scadenza" data-id="${s.id}">Modifica</button>`;
     return `<li class="agenda-voce" data-stato="${st}">
       <div class="agenda-conto">
         <span class="agenda-numero">${testoGiorni}</span>
         <span class="agenda-unita">${unita}</span>
       </div>
       <div>
-        <p class="agenda-titolo">${esc(ETICHETTE[s.tipo] ?? s.tipo)} — ${esc(nomeVeicolo(s.veicoli))}</p>
+        <p class="agenda-titolo">${esc(etichettaScadenza(s))}${s._polizza ? ' <span class="tag-annuale">annuale</span>' : ''} — ${esc(nomeVeicolo(s.veicoli))}</p>
         <p class="agenda-sotto">
           ${dataLunga(s.data_scadenza)} · ${esc(s.veicoli?.targa ?? '')}
           ${s.fornitore ? ' · ' + esc(s.fornitore) : ''} · ${RIPETIZIONI[s.periodicita]}
         </p>
       </div>
       <div class="agenda-comandi">
-        <span class="agenda-importo">${euro(s.importo_previsto)}</span>
-        <button class="btn btn-secondario btn-minuto" data-azione="paga" data-id="${s.id}">Segna pagata</button>
-        <button class="btn btn-fantasma btn-minuto" data-azione="modifica-scadenza" data-id="${s.id}">Modifica</button>
+        ${comandi}
       </div>
     </li>`;
   }).join('');
@@ -433,9 +473,15 @@ function disegnaVeicoli() {
   }
 
   griglia.innerHTML = stato.veicoli.map((v) => {
-    const sue = stato.scadenze
-      .filter((s) => s.veicolo_id === v.id)
-      .sort((a, b) => a.data_scadenza.localeCompare(b.data_scadenza));
+    const sue = [
+      ...stato.scadenze.filter((s) => s.veicolo_id === v.id),
+      ...(v.assicurazione_rinnovo ? [{
+        veicolo_id: v.id,
+        data_scadenza: v.assicurazione_rinnovo,
+        giorni_preavviso: 30,
+        _polizza: true,
+      }] : []),
+    ].sort((a, b) => a.data_scadenza.localeCompare(b.data_scadenza));
 
     const spesa = stato.pagamenti
       .filter((p) => p.veicolo_id === v.id)
@@ -455,7 +501,7 @@ function disegnaVeicoli() {
           const g = giorniA(s.data_scadenza);
           return `<li class="veicolo-scadenza">
             <span class="pallino" data-stato="${statoDi(g, preavvisoDi(s))}"></span>
-            <span class="veicolo-scadenza-voce">${esc(ETICHETTE[s.tipo] ?? s.tipo)}</span>
+            <span class="veicolo-scadenza-voce">${esc(etichettaScadenza(s))}${s._polizza ? ' <span class="tag-annuale">annuale</span>' : ''}</span>
             <span class="veicolo-scadenza-data">${dataIT(s.data_scadenza)}</span>
           </li>`;
         }).join('')
@@ -539,7 +585,7 @@ function apriVeicolo(id = null) {
   $('[data-azione="elimina-veicolo"]').hidden = !v;
   form.record_id.value = v?.id ?? '';
   if (v) {
-    for (const campo of ['tipo', 'marca', 'modello', 'targa', 'data_immatricolazione', 'cv', 'kw', 'alimentazione', 'classe_euro', 'pressione_gomme', 'note']) {
+    for (const campo of ['tipo', 'marca', 'modello', 'targa', 'data_immatricolazione', 'cv', 'kw', 'alimentazione', 'classe_euro', 'pressione_gomme', 'assicurazione_rinnovo', 'note']) {
       form[campo].value = v[campo] ?? '';
     }
   }
@@ -736,14 +782,14 @@ function controllaNotifiche() {
   const chiave = `garage-avvisato-${oggiISO()}`;
   if (localStorage.getItem(chiave)) return;
 
-  const urgenti = stato.scadenze.filter((s) => giorniA(s.data_scadenza) <= preavvisoDi(s));
+  const urgenti = scadenzeAgendaComplete().filter((s) => giorniA(s.data_scadenza) <= preavvisoDi(s));
   if (!urgenti.length) return;
 
   const prima = urgenti[0];
   const g = giorniA(prima.data_scadenza);
   const corpo = urgenti.length === 1
-    ? `${ETICHETTE[prima.tipo]} ${nomeVeicolo(prima.veicoli)} — ${g < 0 ? `scaduta da ${Math.abs(g)} giorni` : `tra ${g} giorni`}`
-    : `${urgenti.length} scadenze richiedono attenzione, la prima è ${ETICHETTE[prima.tipo]} ${nomeVeicolo(prima.veicoli)}.`;
+    ? `${etichettaScadenza(prima)} ${nomeVeicolo(prima.veicoli)} — ${g < 0 ? `scaduta da ${Math.abs(g)} giorni` : `tra ${g} giorni`}`
+    : `${urgenti.length} scadenze richiedono attenzione, la prima è ${etichettaScadenza(prima)} ${nomeVeicolo(prima.veicoli)}.`;
 
   new Notification('Garage — scadenze in arrivo', { body: corpo, tag: 'garage-scadenze' });
   localStorage.setItem(chiave, '1');
